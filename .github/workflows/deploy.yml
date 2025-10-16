@@ -54,10 +54,10 @@ jobs:
             export POSTGRES_DB=${{ vars.POSTGRES_DB }}
             export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
 
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml down
-            docker compose -f docker-compose.prod.yml up -d bot
-            docker system prune -f
+            docker compose -p timtimbot -f docker-compose.prod.yml pull
+            docker compose -p timtimbot -f docker-compose.prod.yml down
+            docker compose -p timtimbot -f docker-compose.prod.yml up -d bot
+            docker system prune -f --filter "label=com.docker.compose.project=timtimbot"
       
       # - name: Ping Bot
       #   id: pingbot
