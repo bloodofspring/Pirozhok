@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"main/actions"
+	"main/database"
 	"main/handlers"
 	"os"
 
@@ -36,6 +37,11 @@ func main() {
 	_ = godotenv.Load()
 	client := connect(true, os.Getenv("API_KEY"))
 	act := getBotActions(*client)
+
+	err := database.InitDb()
+	if err != nil {
+		log.Fatalf("error initializing database: %v", err)
+	}
 
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60

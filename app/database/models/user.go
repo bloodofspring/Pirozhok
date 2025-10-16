@@ -1,5 +1,11 @@
 package models
 
+import (
+	"time"
+
+	"github.com/go-pg/pg/v10"
+)
+
 type Users struct {
 	TgId                 int64 `pg:",pk"`
 	UserName             string
@@ -9,4 +15,9 @@ type Users struct {
 
 	IsAdmin               bool `pg:"default:false"`
 	IsSuperAdmin          bool `pg:"default:false"`
+}
+
+func (u *Users) AfterInsert(tx *pg.Tx) error {
+	u.UpdatedAt = time.Now().Unix()
+	return nil
 }

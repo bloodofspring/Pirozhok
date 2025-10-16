@@ -1,15 +1,29 @@
 package actions
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	"main/util"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 type StartCommand struct {
 	Name   string
 	Client tgbotapi.BotAPI
 }
 
+func (e StartCommand) getUserInfo(update tgbotapi.Update) error {
+	_, err := util.GetOrCreateUser(util.UserInfo{}.New().FromAPIUser(update.Message.From))
+
+	return err
+}
+
 func (e StartCommand) fabricateAnswer(update tgbotapi.Update) tgbotapi.MessageConfig {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-	msg.Text = "Bot is up"
+	err := e.getUserInfo(update)
+	if err != nil {
+		return tgbotapi.NewMessage(update.Message.Chat.ID, "Error getting user info: " + err.Error())
+	}
+
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Bot is up")
 
 	return msg
 }
