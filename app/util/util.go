@@ -51,3 +51,25 @@ func GetOrCreateUser(userInfo *UserInfo) (models.Users, error) {
 
 	return *userToInsert, nil
 }
+
+func GetOrCreateGroup(chatID int64) (models.Groups, error) {
+	db := database.GetDB()
+
+	var group models.Groups
+
+	err := db.Model(&group).Where("chat_id = ?", chatID).Select()
+	if err == nil {
+		return group, nil
+	}
+
+	groupToInsert := &models.Groups{
+		TgId: chatID,
+	}
+
+	_, err = db.Model(groupToInsert).OnConflict("DO NOTHING").Returning("*").Insert()
+	if err != nil {
+		return models.Groups{}, err
+	}
+
+	return *groupToInsert, nil
+}

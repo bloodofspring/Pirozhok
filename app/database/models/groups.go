@@ -7,7 +7,7 @@ import (
 )
 
 type Groups struct {
-	GroupTgId int64
+	TgId int64 `pg:",pk,notnull"`
 	CreatedAt            int64 `pg:",default:extract(epoch from now())"`
 	UpdatedAt            int64 `pg:",default:extract(epoch from now())"`
 
