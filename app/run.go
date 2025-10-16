@@ -4,6 +4,7 @@ import (
 	"log"
 	"main/actions"
 	"main/database"
+	"main/filters"
 	"main/handlers"
 	"os"
 
@@ -24,10 +25,8 @@ func connect(debug bool, apikey string) *tgbotapi.BotAPI {
 }
 
 func getBotActions(bot tgbotapi.BotAPI) handlers.ActiveHandlers {
-	startFilter := func(update tgbotapi.Update) bool { return update.Message.Command() == "start" }
-
 	act := handlers.ActiveHandlers{Handlers: []handlers.Handler{
-		handlers.CommandHandler.Product(actions.StartCommand{Name: "start-cmd", Client: bot}, []handlers.Filter{startFilter}),
+		handlers.CommandHandler.Product(actions.StartCommand{Name: "start-cmd", Client: bot}, []handlers.Filter{filters.StartCommand}),
 	}}
 
 	return act
