@@ -36,13 +36,14 @@ func (s SummonAllUsers) Run(update tgbotapi.Update) error {
 		return err
 	}
 
-	if !initiatorUserStatus.IsAdmin {
-		message := tgbotapi.NewMessage(update.Message.Chat.ID, "You are not an admin")
-		message.ReplyToMessageID = update.Message.MessageID
-		_, err := s.Client.Send(message)
+	// Раскомментировать, если нужно проверять права инициатора
+	// if !initiatorUserStatus.IsAdmin {
+	// 	message := tgbotapi.NewMessage(update.Message.Chat.ID, "You are not an admin")
+	// 	message.ReplyToMessageID = update.Message.MessageID
+	// 	_, err := s.Client.Send(message)
 
-		return err
-	}
+	// 	return err
+	// }
 
 	err = db.Model(&group).
 		WherePK().
