@@ -25,10 +25,14 @@ func (r RegisterLeftUsers) Run(update tgbotapi.Update) error {
 	}
 
 	db := database.GetDB()
-	_, err = db.Model(&models.GroyupParticipants{}).
+	_, err = db.Model(&models.GroupParticipants{}).
 		Where("user_tg_id = ?", user.TgId).
 		Where("group_tg_id = ?", group.TgId).
 		Delete()
 
 	return err
+}
+
+func (r RegisterLeftUsers) GetName() string {
+	return r.Name
 }

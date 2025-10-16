@@ -37,11 +37,15 @@ func (r RegisterNewUsers) Run(update tgbotapi.Update) error {
 	}
 
 	db := database.GetDB()
-	_, err = db.Model(&models.GroyupParticipants{
-		UserTgId: user.TgId,
+	_, err = db.Model(&models.GroupParticipants{
+		UserTgId:  user.TgId,
 		GroupTgId: group.TgId,
-		IsAdmin: chatMember.IsCreator() || chatMember.IsAdministrator(),
+		IsAdmin:   chatMember.IsCreator() || chatMember.IsAdministrator(),
 	}).OnConflict("DO NOTHING").Insert()
 
 	return err
+}
+
+func (r RegisterNewUsers) GetName() string {
+	return r.Name
 }

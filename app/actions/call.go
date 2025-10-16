@@ -26,7 +26,7 @@ func (s SummonAllUsers) Run(update tgbotapi.Update) error {
 	}
 
 	db := database.GetDB()
-	var initiatorUserStatus models.GroyupParticipants
+	var initiatorUserStatus models.GroupParticipants
 	err = db.Model(&initiatorUserStatus).
 		Column("is_admin").
 		Where("user_tg_id = ?", initiatorUser.TgId).
@@ -37,7 +37,9 @@ func (s SummonAllUsers) Run(update tgbotapi.Update) error {
 	}
 
 	if !initiatorUserStatus.IsAdmin {
-		_, err := s.Client.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "You are not an admin"))
+		message := tgbotapi.NewMessage(update.Message.Chat.ID, "You are not an admin")
+		message.ReplyToMessageID = update.Message.MessageID
+		_, err := s.Client.Send(message)
 
 		return err
 	}
@@ -55,7 +57,13 @@ func (s SummonAllUsers) Run(update tgbotapi.Update) error {
 		textMessage += fmt.Sprintf("<a href=\"tg://user?id=%d\">|</a>", user.TgId)
 	}
 
-	_, err = s.Client.Send(tgbotapi.NewMessage(update.Message.Chat.ID, textMessage))
+	message := tgbotapi.NewMessage(update.Message.Chat.ID, textMessage)
+	message.ParseMode = "HTML"
+	_, err = s.Client.Send(message)
 
 	return err
+}
+
+func (s SummonAllUsers) GetName() string {
+	return s.Name
 }

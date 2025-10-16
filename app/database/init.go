@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"log"
 	"main/database/models"
 	"os"
 	"sync"
@@ -30,15 +31,24 @@ func GetDB() *pg.DB {
 }
 
 func InitDb() error {
+	log.Println("Initializing database connection...")
 	db := GetDB()
 
+	// Проверяем подключение к базе данных
+	_, err := db.Exec("SELECT 1")
+	if err != nil {
+		return errors.New("failed to connect to database: " + err.Error())
+	}
+	log.Println("Database connection established successfully")
+
 	models := []interface{}{
+		&models.GroupParticipants{},
 		&models.Users{},
 		&models.Groups{},
-		&models.GroyupParticipants{},
 	}
 
 	for _, model := range models {
+		log.Printf("Creating table for model: %T", model)
 		err := db.Model(model).CreateTable(&orm.CreateTableOptions{
 			Temp:        false, // Временные таблицы
 			IfNotExists: true,
@@ -46,7 +56,9 @@ func InitDb() error {
 		if err != nil {
 			return errors.New("error creating table: " + err.Error())
 		}
+		log.Printf("Table created successfully for model: %T", model)
 	}
 
+	log.Println("Database initialization completed successfully")
 	return nil
 }

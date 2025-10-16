@@ -57,7 +57,7 @@ func GetOrCreateGroup(chatID int64) (models.Groups, error) {
 
 	var group models.Groups
 
-	err := db.Model(&group).Where("chat_id = ?", chatID).Select()
+	err := db.Model(&group).Where("tg_id = ?", chatID).Select()
 	if err == nil {
 		return group, nil
 	}

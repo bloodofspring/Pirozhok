@@ -27,6 +27,10 @@ func connect(debug bool, apikey string) *tgbotapi.BotAPI {
 func getBotActions(bot tgbotapi.BotAPI) handlers.ActiveHandlers {
 	act := handlers.ActiveHandlers{Handlers: []handlers.Handler{
 		handlers.CommandHandler.Product(actions.StartCommand{Name: "start-cmd", Client: bot}, []handlers.Filter{filters.StartCommand}),
+		handlers.CommandHandler.Product(actions.SummonAllUsers{Name: "summon-all-users-cmd", Client: bot}, []handlers.Filter{filters.CallCommand}),
+		handlers.MessageHandler.Product(actions.RegisterNewUsers{Name: "register-new-users", Client: bot}, []handlers.Filter{filters.NewChatMember}),
+		handlers.MessageHandler.Product(actions.RegisterNewUsers{Name: "register-new-users", Client: bot}, []handlers.Filter{filters.IsMessageFromGroup}),
+		handlers.MessageHandler.Product(actions.RegisterLeftUsers{Name: "register-left-users", Client: bot}, []handlers.Filter{filters.LeftChatMember}),
 	}}
 
 	return act
