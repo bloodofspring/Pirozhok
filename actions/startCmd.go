@@ -2,19 +2,19 @@ package actions
 
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-type SayHi struct {
+type StartCommand struct {
 	Name   string
 	Client tgbotapi.BotAPI
 }
 
-func (e SayHi) fabricateAnswer(update tgbotapi.Update) tgbotapi.MessageConfig {
+func (e StartCommand) fabricateAnswer(update tgbotapi.Update) tgbotapi.MessageConfig {
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-	msg.Text = "Hi :)"
+	msg.Text = "Bot is up"
 
 	return msg
 }
 
-func (e SayHi) Run(update tgbotapi.Update) error {
+func (e StartCommand) Run(update tgbotapi.Update) error {
 	if _, err := e.Client.Send(e.fabricateAnswer(update)); err != nil {
 		return err
 	}
@@ -22,6 +22,6 @@ func (e SayHi) Run(update tgbotapi.Update) error {
 	return nil
 }
 
-func (e SayHi) GetName() string {
+func (e StartCommand) GetName() string {
 	return e.Name
 }
