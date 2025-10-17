@@ -1,27 +1,30 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"main/actions"
 	"main/database"
 	"main/filters"
 	"main/handlers"
 	"os"
+	"os/signal"
+	"syscall"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 )
 
-func connect(debug bool, apikey string) *tgbotapi.BotAPI {
+func connect(debug bool, apikey string) (*tgbotapi.BotAPI, error) {
 	bot, err := tgbotapi.NewBotAPI(apikey)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to create bot API: %w", err)
 	}
 
 	bot.Debug = debug
 	log.Printf("Successfully authorized on account @%s", bot.Self.UserName)
 
-	return bot
+	return bot, nil
 }
 
 func getBotActions(bot tgbotapi.BotAPI) handlers.ActiveHandlers {
@@ -37,20 +40,52 @@ func getBotActions(bot tgbotapi.BotAPI) handlers.ActiveHandlers {
 }
 
 func main() {
-	_ = godotenv.Load()
-	client := connect(true, os.Getenv("API_KEY"))
-	act := getBotActions(*client)
-
-	err := database.InitDb()
-	if err != nil {
-		log.Fatalf("error initializing database: %v", err)
+	// Загружаем переменные окружения
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: could not load .env file: %v", err)
 	}
 
+	// Получаем API ключ
+	apiKey := os.Getenv("API_KEY")
+	if apiKey == "" {
+		log.Fatal("API_KEY environment variable is required")
+	}
+
+	// Подключаемся к боту
+	client, err := connect(true, apiKey)
+	if err != nil {
+		log.Fatalf("Failed to connect to bot: %v", err)
+	}
+
+	// Инициализируем базу данных
+	if err := database.InitDb(); err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+
+	// Настраиваем graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Получаем обработчики
+	act := getBotActions(*client)
+
+	// Настраиваем получение обновлений
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
 
 	updates := client.GetUpdatesChan(updateConfig)
-	for update := range updates {
-		_ = act.HandleAll(update)
+	log.Println("Bot started successfully. Waiting for updates...")
+
+	// Основной цикл с обработкой ошибок
+	for {
+		select {
+		case update := <-updates:
+			if err := act.HandleAll(update); err != nil {
+				log.Printf("Error handling update: %v", err)
+			}
+		case sig := <-sigChan:
+			log.Printf("Received signal %v, shutting down gracefully...", sig)
+			return
+		}
 	}
 }

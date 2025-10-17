@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"main/database"
 	"main/database/models"
 	"main/util"
@@ -32,6 +33,22 @@ func (r RegisterNewUsers) Run(update tgbotapi.Update) error {
 	}
 
 	chatMember, err := r.Client.GetChatMember(chatMemberConfig)
+
+	// Обрабатываем ошибку преобразования группы в супергруппу
+	if util.IsSupergroupUpgradeError(err) {
+		newChatID, handleErr := util.HandleSupergroupUpgrade(err, group.TgId)
+		if handleErr != nil {
+			return fmt.Errorf("failed to handle supergroup upgrade: %w", handleErr)
+		}
+
+		// Обновляем chat_id в конфигурации и повторяем запрос
+		chatMemberConfig.ChatID = newChatID
+		chatMember, err = r.Client.GetChatMember(chatMemberConfig)
+
+		// Обновляем group.TgId для использования в базе данных
+		group.TgId = newChatID
+	}
+
 	if err != nil {
 		return err
 	}

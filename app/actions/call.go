@@ -62,6 +62,19 @@ func (s SummonAllUsers) Run(update tgbotapi.Update) error {
 	message.ParseMode = "HTML"
 	_, err = s.Client.Send(message)
 
+	// Обрабатываем ошибку преобразования группы в супергруппу
+	if util.IsSupergroupUpgradeError(err) {
+		newChatID, handleErr := util.HandleSupergroupUpgrade(err, update.Message.Chat.ID)
+		if handleErr != nil {
+			return fmt.Errorf("failed to handle supergroup upgrade: %w", handleErr)
+		}
+
+		// Повторяем отправку сообщения с новым chat_id
+		retryMessage := tgbotapi.NewMessage(newChatID, textMessage)
+		retryMessage.ParseMode = "HTML"
+		_, err = s.Client.Send(retryMessage)
+	}
+
 	return err
 }
 

@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"main/util"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -20,7 +21,7 @@ func (e StartCommand) getUserInfo(update tgbotapi.Update) error {
 func (e StartCommand) fabricateAnswer(update tgbotapi.Update) tgbotapi.MessageConfig {
 	err := e.getUserInfo(update)
 	if err != nil {
-		return tgbotapi.NewMessage(update.Message.Chat.ID, "Error getting user info: " + err.Error())
+		return tgbotapi.NewMessage(update.Message.Chat.ID, "Error getting user info: "+err.Error())
 	}
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Bot is up")
@@ -29,7 +30,22 @@ func (e StartCommand) fabricateAnswer(update tgbotapi.Update) tgbotapi.MessageCo
 }
 
 func (e StartCommand) Run(update tgbotapi.Update) error {
-	if _, err := e.Client.Send(e.fabricateAnswer(update)); err != nil {
+	message := e.fabricateAnswer(update)
+	_, err := e.Client.Send(message)
+
+	// Обрабатываем ошибку преобразования группы в супергруппу
+	if util.IsSupergroupUpgradeError(err) {
+		newChatID, handleErr := util.HandleSupergroupUpgrade(err, update.Message.Chat.ID)
+		if handleErr != nil {
+			return fmt.Errorf("failed to handle supergroup upgrade: %w", handleErr)
+		}
+
+		// Повторяем отправку сообщения с новым chat_id
+		retryMessage := tgbotapi.NewMessage(newChatID, message.Text)
+		_, err = e.Client.Send(retryMessage)
+	}
+
+	if err != nil {
 		return err
 	}
 

@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"fmt"
+	"strings"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
 )
@@ -67,20 +69,25 @@ type ActiveHandlers struct {
 	Handlers []Handler
 }
 
-func (hl ActiveHandlers) HandleAll(update tgbotapi.Update) map[uuid.UUID]bool {
-	result := make(map[uuid.UUID]bool)
-
+func (hl ActiveHandlers) HandleAll(update tgbotapi.Update) error {
 	for _, h := range hl.Handlers {
-		runResult, err := h.run(update)
+		_, err := h.run(update)
 
 		if err != nil {
-			panic(err)
-		}
+			// Логируем ошибку вместо panic, чтобы приложение не падало
+			fmt.Printf("ERROR in handler %s: %v\n", h.getId(), err)
 
-		result[h.getId()] = runResult
+			// Если это ошибка supergroup upgrade, логируем дополнительную информацию
+			if strings.Contains(err.Error(), "group chat was upgraded to a supergroup chat") {
+				fmt.Printf("SUPERGROUP UPGRADE detected in handler %s for chat %d\n", h.getId(), update.Message.Chat.ID)
+			}
+
+			// Продолжаем выполнение других обработчиков
+			continue
+		}
 	}
 
-	return result
+	return nil
 }
 
 type handlerProducer struct {
